@@ -98,7 +98,9 @@ namespace asinbow.AttachIT
 
             _Form = new AttachITWatchForm(OnWatched);
             _Form.ControlBox = false;
-            //_Form.Show();
+            _Form.Visible = false;
+            _Form.Show();
+            _Form.Hide();
         }
 
         private EnvDTE80.DTE2 _dte;
@@ -186,22 +188,7 @@ namespace asinbow.AttachIT
         /// </summary>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            // Show a Message Box to prove we were here
-            IVsUIShell uiShell = (IVsUIShell)GetService(typeof(SVsUIShell));
-            Guid clsid = Guid.Empty;
-            int result;
-            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(uiShell.ShowMessageBox(
-                       0,
-                       ref clsid,
-                       "AttachIT",
-                       string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.ToString()),
-                       string.Empty,
-                       0,
-                       OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                       OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
-                       OLEMSGICON.OLEMSGICON_INFO,
-                       0,        // false
-                       out result));
+            ShowToolWindow(sender, e);
         }
 
     }

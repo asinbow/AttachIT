@@ -23,7 +23,7 @@ namespace asinbow.AttachIT
     {
         public const int WM_USER = 1024;
         public const int WM_ATTACHIT = WM_USER  + 0;
-        public const string ATTACHIT_WND_TEXT = "asinbow.AttachIT.WatchForm";
+        public const string ATTACHIT_WINDOW_TEXT = "asinbow.AttachIT.WatchForm";
 
         public delegate AttachError ActionDelegate(int pid, int ppid);
 
@@ -37,7 +37,7 @@ namespace asinbow.AttachIT
         protected override void OnCreateControl()
         {
             base.OnCreateControl();
-            Text = ATTACHIT_WND_TEXT;
+            Text = ATTACHIT_WINDOW_TEXT;
         }
 
         protected override void DefWndProc(ref Message msg)
