@@ -155,6 +155,37 @@ namespace asinbow.AttachIT
             return AttachError.ProcessNotFound;
         }
 
+        private void AttachProcess(int pid, int ppid, int msDelay, int trials)
+        {
+            if (trials == 0)
+            {
+                return;
+            }
+            System.Threading.Tasks.Task.Delay(msDelay).ContinueWith((t) =>
+            {
+                EnvDTE.Process proc;
+                EnvDTE.Process pproc;
+                AttachError error = MatchProcess(pid, ppid, out proc, out pproc);
+                if (error == AttachError.NoError)
+                {
+                    try
+                    {
+                        proc.Attach();
+                        return;
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Exception when attaching process");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Process not found when recheck.");
+                }
+                AttachProcess(pid, ppid, msDelay, trials - 1);
+            });
+        }
+
         private AttachError OnWatched(int pid, int ppid)
         {
             EnvDTE.Process proc;
@@ -162,27 +193,7 @@ namespace asinbow.AttachIT
             AttachError error = MatchProcess(pid, ppid, out proc, out pproc);
             if (error == AttachError.NoError)
             {
-                System.Threading.Tasks.Task.Run(() =>
-                {
-                    EnvDTE.Process _proc;
-                    EnvDTE.Process _pproc;
-                    AttachError _error = MatchProcess(pid, ppid, out _proc, out _pproc);
-                    if (error == AttachError.NoError)
-                    {
-                        try
-                        {
-                            _proc.Attach();
-                        }
-                        catch (Exception)
-                        {
-                            Console.WriteLine("Exception when attaching process");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Process not found when recheck.");
-                    }
-                });
+                AttachProcess(pid, ppid, 500, 10);
             }
             else
             {
