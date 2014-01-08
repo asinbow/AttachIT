@@ -112,8 +112,10 @@ namespace asinbow.AttachIT
             return _dte;
         }
 
-        private AttachError OnWatched(int pid, int ppid)
+        private AttachError MatchProcess(int pid, int ppid, out EnvDTE.Process proc, out EnvDTE.Process pproc)
         {
+            proc = null;
+            pproc = null;
             if (!Watching)
             {
                 return AttachError.NotWatching;
@@ -125,41 +127,68 @@ namespace asinbow.AttachIT
             }
 
             bool ppidMatched = ppid == 0;
-            foreach (EnvDTE.Process proc in _dte.Debugger.DebuggedProcesses)
+            foreach (EnvDTE.Process p in _dte.Debugger.DebuggedProcesses)
             {
-                if (proc.ProcessID == pid)
+                if (p.ProcessID == pid)
                 {
                     return AttachError.AlreadyDebugged;
                 }
-                if (proc.ProcessID == ppid)
+                if (p.ProcessID == ppid)
                 {
                     ppidMatched = true;
+                    pproc = p;
                 }
             }
             if (!ppidMatched)
             {
                 return AttachError.ParentProcessNotDebugged;
             }
-            foreach (EnvDTE.Process proc in _dte.Debugger.LocalProcesses)
+            foreach (EnvDTE.Process p in _dte.Debugger.LocalProcesses)
             {
-                if (proc.ProcessID == pid)
+                if (p.ProcessID == pid)
                 {
-                    System.Threading.Tasks.Task.Run(() =>
-                    {
-                        try
-                        {
-                            proc.Attach();
-                        }
-                        catch (Exception)
-                        {
-                            Console.WriteLine("Exception when attaching process");
-                        }
-                    });
+                    proc = p;
                     return AttachError.NoError;
                 }
             }
 
             return AttachError.ProcessNotFound;
+        }
+
+        private AttachError OnWatched(int pid, int ppid)
+        {
+            EnvDTE.Process proc;
+            EnvDTE.Process pproc;
+            AttachError error = MatchProcess(pid, ppid, out proc, out pproc);
+            if (error == AttachError.NoError)
+            {
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    EnvDTE.Process _proc;
+                    EnvDTE.Process _pproc;
+                    AttachError _error = MatchProcess(pid, ppid, out _proc, out _pproc);
+                    if (error == AttachError.NoError)
+                    {
+                        try
+                        {
+                            _proc.Attach();
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("Exception when attaching process");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Process not found when recheck.");
+                    }
+                });
+            }
+            else
+            {
+                Console.WriteLine("Process not found.");
+            }
+            return error;
         }
 
         public void ShowWatchForm(bool show)
